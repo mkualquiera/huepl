@@ -12,7 +12,7 @@ function test()
     
     @debug "deb" a
 
-    for i in 1:30
+    for i in 1:10
         println([ "honk" for j in 1:i ]...)
         sleep(0.2)
     end
