@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+
+<head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code&display=swap" rel="stylesheet">
+    <script src="static/ace-builds/src-noconflict/ace.js" type="text/javascript" charset="utf-8"></script>
+    <script src="static/ace-builds/src-noconflict/ext-modelist.js" type="text/javascript" charset="utf-8"></script>
+    <link rel="stylesheet" href="static/style.css">
+</head>
+
+<body>
+    
+    <div class="row vfill">
+        <div class="column vfill">
+            <div class="row">
+                <button id="selectfilebutton" onclick="selectFile()" class="dropbtn column">File...</button>
+                <button id="savefilebutton" onclick="requestSave()" class="column">Save</button>
+            </div>
+            <div id="filelist" class="dropdown-content">
+                <a href="#">Link 1</a>
+                <a href="#">Link 2</a>
+                <a href="#">Link 3</a>
+            </div>
+            <div id="editor" class="editor">
+                function test(a::Parameter)
+                yes + 2
+                end
+            </div>
+        </div>
+        <div class="column">
+            <div class="row">
+                <button onclick="requestRun()" class="column">Run</button>
+                <button onclick="requestTerminate()" class="column">Terminate</button>
+            </div>
+            <div id="output" class="output">
+
+            </div>
+        </div>
+    </div>
+
+    <script type="application/javascript" src="static/code.js"></script>
+</body>
