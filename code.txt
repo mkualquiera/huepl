@@ -1,0 +1,33 @@
+Script started on 2021-09-05 20:04:29-05:00 [TERM="xterm-256color" TTY="/dev/pts/0" COLUMNS="-1" LINES="-1"]
+[36m[1m┌ [22m[39m[36m[1mInfo: [22m[39mtest1
+[36m[1m└ [22m[39m  a = 3
+[91m[1m┌ [22m[39m[91m[1mError: [22m[39mtest2
+[91m[1m│ [22m[39m  a = 3
+[91m[1m└ [22m[39m[90m@ Main /mnt/secondary/projects/huepl/code/main.jl:9[39m
+[33m[1m┌ [22m[39m[33m[1mWarning: [22m[39mtest3
+[33m[1m│ [22m[39m  a = 3
+[33m[1m└ [22m[39m[90m@ Main /mnt/secondary/projects/huepl/code/main.jl:11[39m
+4×7 Matrix{Int64}:
+ 1  2  3  4  5  6  7
+ 7  6  5  4  3  2  1
+ 2  3  4  5  6  7  8
+ 1  2  3  4  5  6  7
+test
+testtest
+testtesttest
+testtesttesttest
+testtesttesttesttest
+testtesttesttesttesttest
+testtesttesttesttesttesttest
+testtesttesttesttesttesttesttest
+testtesttesttesttesttesttesttesttest
+testtesttesttesttesttesttesttesttesttest
+[91m[1mERROR: [22m[39mLoadError: UndefVarError: killme not defined
+Stacktrace:
+ [1] [0m[1mtest[22m[0m[1m([22m[0m[1m)[22m
+[90m   @ [39m[35mMain[39m [90m/mnt/secondary/projects/huepl/code/[39m[90;4mmain.jl:23[0m
+ [2] top-level scope
+[90m   @ [39m[90m/mnt/secondary/projects/huepl/code/[39m[90;4mmain.jl:26[0m
+in expression starting at /mnt/secondary/projects/huepl/code/main.jl:26
+
+Script done on 2021-09-05 20:04:33-05:00 [COMMAND_EXIT_CODE="1"]

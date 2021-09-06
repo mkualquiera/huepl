@@ -4,6 +4,12 @@ var modelist = ace.require("ace/ext/modelist")
 editor.setTheme("ace/theme/dracula");
 editor.session.setMode("ace/mode/julia");
 
+var term = new Terminal();
+term.open(document.getElementById('output'));
+
+const fitAddon = new FitAddon.FitAddon();
+term.loadAddon(fitAddon);
+
 var ws = new WebSocket('ws://' + document.domain + ':' + location.port + '/api/v2/ws');
 
 var outputcontainer = document.getElementById("output");
@@ -17,6 +23,7 @@ var workingfile = "";
 ws.onmessage = function (event) {
     console.log(event.data);
     dataobj = JSON.parse(event.data);
+    /*
     if (dataobj["response"] == "stdout") {
         dataobj["data"] = dataobj["data"].replaceAll(" ", "&nbsp");
         dataobj["data"] = dataobj["data"].replaceAll("\n", "<br>");
@@ -26,6 +33,10 @@ ws.onmessage = function (event) {
         dataobj["data"] = dataobj["data"].replaceAll(" ", "&nbsp");
         dataobj["data"] = dataobj["data"].replaceAll("\n", "<br>");
         outputcontainer.innerHTML += "<a class='outputerror'>"+dataobj["data"]+"</a>"
+    }*/
+    if (dataobj["response"] == "stdout" || dataobj["response"] == "stderr") {
+        dataobj["data"] = dataobj["data"].replaceAll("\n","\n\r");
+        term.write(dataobj["data"]);
     }
     if (dataobj["response"] == "files") {
         drophtml = "";
@@ -42,7 +53,12 @@ ws.onmessage = function (event) {
         var mode = modelist.getModeForPath(dataobj["filename"]).mode;
         editor.session.setMode(mode);
     }
+    if (dataobj["response"] == "finished") {
+        term.write("Finished with exit code " + dataobj["data"] + "\n\r");
+    }
 };
+
+fitAddon.fit();
 
 function requestFile(filename) {
     ws.send(JSON.stringify({
@@ -56,8 +72,9 @@ function requestRun() {
     ws.send(JSON.stringify({
         request: "run",
         data: workingfile
-    }))
-    outputcontainer.innerHTML = "";
+    }));
+    fitAddon.fit();
+    term.clear();
 }
 
 function requestSave() {
@@ -71,7 +88,8 @@ function requestSave() {
 function requestTerminate() {
     ws.send(JSON.stringify({
         request: "terminate"
-    }))
+    }));
+    term.write("Forced termination\n\r");
 }
 
 function selectFile() {

@@ -17,15 +17,13 @@ body {
 }
 
 .output {
-    padding: 8px;
     margin: 8px;
     font-family: 'Fira Code', monospace;
     font-size: 18px;
     color: #fff;
     border: 1px solid #222;
-    height: 92%;
-    overflow-y: scroll;
-    overflow-x: scroll;
+    height: 93%;
+    background-color: #000;
 }
 
 .outputerror {
