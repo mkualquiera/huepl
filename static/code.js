@@ -1,4 +1,10 @@
 
+const queryString = window.location.search;
+const urlParams = new URLSearchParams(queryString);
+
+const workingDir = urlParams.get('working_dir');
+const initFile = urlParams.get('init_file');
+
 var editor = ace.edit("editor");
 var modelist = ace.require("ace/ext/modelist")
 editor.setTheme("ace/theme/dracula");
@@ -20,6 +26,12 @@ var selectfilebutton = document.getElementById("selectfilebutton");
 
 var workingfile = "";
 
+ws.onopen = function (event) {
+    ws.send(JSON.stringify({ request: "workingdir", data: workingDir }));
+    requestFile(initFile);
+}
+
+
 ws.onmessage = function (event) {
     console.log(event.data);
     dataobj = JSON.parse(event.data);
@@ -35,13 +47,13 @@ ws.onmessage = function (event) {
         outputcontainer.innerHTML += "<a class='outputerror'>"+dataobj["data"]+"</a>"
     }*/
     if (dataobj["response"] == "stdout" || dataobj["response"] == "stderr") {
-        dataobj["data"] = dataobj["data"].replaceAll("\n","\n\r");
+        dataobj["data"] = dataobj["data"].replaceAll("\n", "\n\r");
         term.write(dataobj["data"]);
     }
     if (dataobj["response"] == "files") {
         drophtml = "";
         for (var i in dataobj["data"]) {
-            drophtml += '<a href="#" onclick="requestFile(\'' + 
+            drophtml += '<a href="#" onclick="requestFile(\'' +
                 dataobj["data"][i] + '\')">' + dataobj["data"][i] + '</a>';
         }
         filelistcontainer.innerHTML = drophtml;
@@ -54,7 +66,26 @@ ws.onmessage = function (event) {
         editor.session.setMode(mode);
     }
     if (dataobj["response"] == "finished") {
-        term.write("Finished with exit code " + dataobj["data"] + "\n\r");
+        var currentdate = new Date();
+        var datetime = currentdate.getDate() + "/"
+            + (currentdate.getMonth() + 1) + "/"
+            + currentdate.getFullYear() + " @ "
+            + currentdate.getHours() + ":"
+            + currentdate.getMinutes() + ":"
+            + currentdate.getSeconds();
+        term.write("[22m[39m[90mFinished with exit code " + dataobj["data"] +  
+            " on " + datetime + "[39m\n\r");
+    }
+    if (dataobj["response"] == "starting") {
+        var currentdate = new Date();
+        var datetime = currentdate.getDate() + "/"
+            + (currentdate.getMonth() + 1) + "/"
+            + currentdate.getFullYear() + " @ "
+            + currentdate.getHours() + ":"
+            + currentdate.getMinutes() + ":"
+            + currentdate.getSeconds();
+
+        term.write("[22m[39m[90mStarting execution on " + datetime + "[39m\n\r");
     }
 };
 

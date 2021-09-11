@@ -10,16 +10,13 @@ import os
 
 dotenv.load_dotenv()
 
-DEFAULT_FILE = os.environ.get("HUEPL_DEFAULT_FILE")
-
-
 app = Quart(__name__)
 
 
-async def file_reporter(websocket):
+async def file_reporter(websocket,working_dir):
     while True:
         result = []
-        for root, dirs, files in os.walk("code/"):
+        for root, dirs, files in os.walk(working_dir):
             root = root.replace("code/", "")
             for file in files:
                 result.append(os.path.join(root, file))
@@ -47,8 +44,8 @@ async def relay_stream(proc, stream, websocket, name):
         await asyncio.sleep(0)
 
 
-async def run_code(websocket, filename):
-    if not os.path.isfile(os.path.join("code", filename)):
+async def run_code(websocket, filename, working_dir):
+    if not os.path.isfile(os.path.join(working_dir, filename)):
         await websocket.send_json({
             'response': 'error',
             'description': 'File does not exist'
@@ -56,7 +53,7 @@ async def run_code(websocket, filename):
         return
 
     os.system(
-        f'chmod +x {os.path.join("code", filename)}')
+        f'chmod +x {os.path.join(working_dir, filename)}')
     info("Changed permissions!")
     try:
         proc = await asyncio.create_subprocess_shell(f" script --flush --quiet --return code.txt --command '{os.path.join('code', filename)}'",
@@ -86,16 +83,9 @@ async def ws():
 
     info("Websocket connected")
     runner_coro = None
-    reporter_coro = asyncio.create_task(file_reporter(websocket))
+    reporter_coro = None
 
-    with open(os.path.join("code", DEFAULT_FILE), "r") as f:
-        contents = f.read()
-
-    await websocket.send_json({
-        'response': 'filecontents',
-        'filename': DEFAULT_FILE,
-        'data': contents
-    })
+    working_dir = None
 
     while True:
         try:
@@ -116,7 +106,7 @@ async def ws():
                     'response': 'starting',
                 })
                 runner_coro = asyncio.create_task(
-                    run_code(websocket, data['data']))
+                    run_code(websocket, data['data'],working_dir))
                 continue
 
             if data['request'] == 'terminate':
@@ -126,12 +116,12 @@ async def ws():
 
             if data['request'] == 'filecontents':
                 filename = data['data']
-                if not os.path.isfile(os.path.join("code", filename)):
+                if not os.path.isfile(os.path.join(working_dir, filename)):
                     await websocket.send_json({
                         'response': 'error',
                         'description': 'File does not exist'
                     })
-                with open(os.path.join("code", filename), "r") as f:
+                with open(os.path.join(working_dir, filename), "r") as f:
                     contents = f.read()
                 await websocket.send_json({
                     'response': 'filecontents',
@@ -142,9 +132,18 @@ async def ws():
             
             if data['request'] == 'save':
                 filename = data['filename']
-                with open(os.path.join("code", filename), "w") as f:
+                with open(os.path.join(working_dir, filename), "w") as f:
                     f.write(data["data"])
                 continue
+
+            if data['request'] == 'workingdir':
+                working_dir = data['data']
+                if not os.path.isdir(working_dir):
+                    await websocket.send_json({
+                        'response': 'error',
+                        'description': 'Working dir does not exist'
+                    })
+                asyncio.create_task(file_reporter(websocket,working_dir))
 
         except asyncio.CancelledError:
             info("Websocket disconnected, cleaning up...")
@@ -155,6 +154,7 @@ async def ws():
 
 
 @app.route("/")
+@app.route("/index.html")
 async def index():
     return await render_template("repl.html")
 
