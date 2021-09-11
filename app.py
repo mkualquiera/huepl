@@ -159,5 +159,4 @@ async def index():
     return await render_template("repl.html")
 
 if __name__ == "__main__":
-    logging.basicConfig(encoding='utf-8', level=logging.DEBUG)
-    app.run("0.0.0.0", 5000, True)
+    app.run("0.0.0.0", 80, True)
