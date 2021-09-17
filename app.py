@@ -60,7 +60,7 @@ async def run_code(websocket, filename, working_dir):
         f'chmod +x {os.path.join(working_dir, filename)}')
     info("Changed permissions!")
     try:
-        proc = await asyncio.create_subprocess_shell(f"cd {working_dir}; script --flush --quiet --return code.txt --command '{filename}'",
+        proc = await asyncio.create_subprocess_shell(f"cd {working_dir}; script --flush --quiet --return code.txt --command './{filename}'",
                                                      stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         stdrelay = asyncio.create_task(relay_stream(proc,
