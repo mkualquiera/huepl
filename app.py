@@ -17,8 +17,12 @@ async def file_reporter(websocket,working_dir):
     while True:
         result = []
         for root, dirs, files in os.walk(working_dir):
-            root = root.replace("code/", "")
+            if root == working_dir:
+                root = ""
+            else:
+                root = root[len(working_dir)+1:]
             for file in files:
+
                 result.append(os.path.join(root, file))
         await websocket.send_json({
             'response': 'files',
