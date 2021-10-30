@@ -3,7 +3,7 @@ import dotenv
 from asyncio import subprocess
 from asyncio.exceptions import CancelledError
 from asyncio.tasks import Task
-from quart import Quart, render_template, websocket
+from quart import Quart, render_template, websocket, send_file
 from logging import debug, warning, info, error, critical
 import logging
 import os
@@ -133,11 +133,42 @@ async def ws():
                     'data': contents
                 })
                 continue
+
+            if data['request'] == 'createfile':
+                filename = data['data']
+
+                # Error if file exists
+                if os.path.isfile(os.path.join(working_dir, filename)):
+                    await websocket.send_json({
+                        'response': 'error',
+                        'description': 'File already exists'
+                    })
+                    continue
+
+                # Create leading directories 
+                if not os.path.exists(os.path.dirname(os.path.join(working_dir, filename))):
+                    os.makedirs(os.path.dirname(os.path.join(working_dir, filename)))
+
+                # Create file
+                with open(os.path.join(working_dir, filename), "w") as f:
+                    f.write("")
+                await websocket.send_json({
+                    'response': 'filecontents',
+                    'filename': filename,
+                    'data': ''
+                })
+                continue
+                
             
             if data['request'] == 'save':
                 filename = data['filename']
                 with open(os.path.join(working_dir, filename), "w") as f:
                     f.write(data["data"])
+                continue
+
+            if data['request'] == 'delete':
+                filename = data['data']
+                os.remove(os.path.join(working_dir, filename))
                 continue
 
             if data['request'] == 'workingdir':
@@ -148,6 +179,7 @@ async def ws():
                         'description': 'Working dir does not exist'
                     })
                 asyncio.create_task(file_reporter(websocket,working_dir))
+                continue
 
         except asyncio.CancelledError:
             info("Websocket disconnected, cleaning up...")
@@ -161,6 +193,12 @@ async def ws():
 @app.route("/index.html")
 async def index():
     return await render_template("repl.html")
+
+@app.route("/api/v2/download/<path:filepath>")
+async def download(filepath):
+    # Serve the file at the requested filepath  
+    print(filepath)
+    return await send_file(filepath)
 
 if __name__ == "__main__":
     app.run("0.0.0.0", 80, True)

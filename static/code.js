@@ -4,6 +4,8 @@ const urlParams = new URLSearchParams(queryString);
 
 const workingDir = urlParams.get('working_dir');
 const initFile = urlParams.get('init_file');
+const downloadExt = urlParams.get('download_ext');
+
 
 var editor = ace.edit("editor");
 var modelist = ace.require("ace/ext/modelist")
@@ -52,9 +54,32 @@ ws.onmessage = function (event) {
     }
     if (dataobj["response"] == "files") {
         drophtml = "";
+
+        // The first entry of the file list allows the user to create a new file
+        drophtml += "<div class='listelem newfile' onclick='requestCreateFile()'>Create new file</div>";
+
         for (var i in dataobj["data"]) {
-            drophtml += '<a href="#" onclick="requestFile(\'' +
-                dataobj["data"][i] + '\')">' + dataobj["data"][i] + '</a>';
+            // If the file has the extension downloadExt, trigger download
+            if (dataobj["data"][i].endsWith(downloadExt)) {
+                drophtml += '<div class="listelem"> <a class="linkleft" href="#" onclick="downloadFile(\'' + 
+                    dataobj["data"][i] + '\')">' + dataobj["data"][i] + '</a>' + 
+                    '<a class="delete" href="#" onclick="requestDelete(\'' + dataobj["data"][i] + '\')">' +
+                    '&#x232B' + '</a>' + '</div>';
+            } else {
+                // When a file is selected, request the file contents
+                //drophtml += '<a href="#" onclick="requestFile(\'' +
+                //    dataobj["data"][i] + '\')">' + dataobj["data"][i] + '</a>';
+
+                // This is okay but we need an option to request and also delete a file
+                // I suggest something like:
+
+                // Unicode symbol for delete: U+232B
+
+                drophtml += '<div class="listelem"> <a class="linkleft" href="#" onclick="requestFile(\'' + 
+                    dataobj["data"][i] + '\')">' + dataobj["data"][i] + '</a>' + 
+                    '<a class="delete" href="#" onclick="requestDelete(\'' + dataobj["data"][i] + '\')">' +
+                    '&#x232B' + '</a>' + '</div>';
+            }
         }
         filelistcontainer.innerHTML = drophtml;
     }
@@ -98,6 +123,28 @@ function requestFile(filename) {
     }))
 }
 
+function requestCreateFile() {
+    // Ask the user for the filename
+    var filename = prompt("Enter the filename");
+    if (filename == null) {
+        return;
+    }
+    ws.send(JSON.stringify({
+        request: "createfile",
+        data: filename
+    }))
+}
+
+function downloadFile(filename) {
+    // Trigger file download using javascript
+    var a = document.createElement("a");
+    a.href = "http://" + document.domain + ":" + location.port + "/api/v2/download/" + workingDir + "/" + filename;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+}
+
 function requestRun() {
     requestSave();
     ws.send(JSON.stringify({
@@ -106,6 +153,20 @@ function requestRun() {
     }));
     fitAddon.fit();
     term.clear();
+}
+
+function requestDelete(filename) {
+    // ask for confirmation
+    if (confirm("Are you sure you want to delete " + filename + "?")) {
+        ws.send(JSON.stringify({
+            request: "delete",
+            data: filename
+        }));
+    }
+    // If the deleted file is the currently open file, open the init file
+    if (filename == workingfile) {
+        requestFile(initFile);
+    }
 }
 
 function requestSave() {
